@@ -90,7 +90,6 @@ def depthFirstSearch(problem: SearchProblem):
     "*** YOUR CODE HERE ***"
     frontier = util.Stack()
     explored = set()
-    print(problem.getStartState())
     frontier.push((problem.getStartState(), [ Directions.STOP ], 0))
 
     while not frontier.isEmpty():
@@ -114,7 +113,6 @@ def breadthFirstSearch(problem: SearchProblem):
     "*** YOUR CODE HERE ***"
     frontier = util.Queue()
     explored = set()
-    print(problem.getStartState())
     frontier.push((problem.getStartState(), [ Directions.STOP ], 0))
 
     while not frontier.isEmpty():
@@ -138,7 +136,6 @@ def uniformCostSearch(problem: SearchProblem):
     "*** YOUR CODE HERE ***"
     frontier = util.PriorityQueue()
     explored = set()
-    print(problem.getStartState())
     frontier.push((problem.getStartState(), [ Directions.STOP ]), 0)
 
     while not frontier.isEmpty():
@@ -152,7 +149,6 @@ def uniformCostSearch(problem: SearchProblem):
             for (s, a, c) in succ:
                 child_actions = actions.copy()
                 child_actions.append(a)
-                #print(child_actions)
                 child_cost = problem.getCostOfActions(child_actions[1:])
                 frontier.push((s, child_actions), child_cost)
     
@@ -169,7 +165,27 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.PriorityQueue()
+    explored = set()
+    frontier.push((problem.getStartState(), [ Directions.STOP ]), 0)
+
+    while not frontier.isEmpty():
+        (s, actions) = frontier.pop()
+        if problem.isGoalState(s) : 
+            return actions[1:]
+        
+        if s not in explored:
+            explored.add(s)
+            succ = problem.getSuccessors(s)
+            for (s, a, c) in succ:
+                child_actions = actions.copy()
+                child_actions.append(a)
+                child_cost = problem.getCostOfActions(child_actions[1:])
+                h = heuristic(s, problem)
+                frontier.push((s, child_actions), child_cost + h)
+    
+    # No route found 
+    return []
 
 
 # Abbreviations
