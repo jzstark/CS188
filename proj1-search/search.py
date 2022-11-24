@@ -112,7 +112,26 @@ def depthFirstSearch(problem: SearchProblem):
 def breadthFirstSearch(problem: SearchProblem):
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.Queue()
+    explored = set()
+    print(problem.getStartState())
+    frontier.push((problem.getStartState(), [ Directions.STOP ], 0))
+
+    while not frontier.isEmpty():
+        (s, actions, c) = frontier.pop()
+        if problem.isGoalState(s) : 
+            return actions[1:]
+        
+        if s not in explored:
+            explored.add(s)
+            succ = problem.getSuccessors(s)
+            for (s, a, c) in succ:
+                child_actions = actions.copy()
+                child_actions.append(a)
+                frontier.push((s, child_actions, c))
+    
+    # No route found 
+    return []
 
 def uniformCostSearch(problem: SearchProblem):
     """Search the node of least total cost first."""
