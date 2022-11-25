@@ -292,6 +292,8 @@ class CornersProblem(search.SearchProblem):
         # Please add any code here which you would like to use
         # in initializing the problem
         "*** YOUR CODE HERE ***"
+        # state: (position, cornersBooleanList)
+        self.costFn = lambda x: 1
 
     def getStartState(self):
         """
@@ -299,14 +301,14 @@ class CornersProblem(search.SearchProblem):
         space)
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return (self.startingPosition, (0,0,0,0))
 
     def isGoalState(self, state: Any):
         """
         Returns whether this search state is a goal state of the problem.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return state[1] == (1,1,1,1)
 
     def getSuccessors(self, state: Any):
         """
@@ -327,8 +329,23 @@ class CornersProblem(search.SearchProblem):
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
-
             "*** YOUR CODE HERE ***"
+            
+            (x, y), cbool = state
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                nextPos = (nextx, nexty)
+                try:
+                    idx = self.corners.index(nextPos)
+                    cbool = list(cbool)
+                    cbool[idx] = 1
+                    cbool = tuple(cbool)
+                except ValueError:
+                    pass
+                nextState = (nextPos, cbool)
+                cost = self.costFn(nextState)
+                successors.append( (nextState, action, cost) )
 
         self._expanded += 1 # DO NOT CHANGE
         return successors
@@ -362,9 +379,18 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    def mann_dist(xy1, xy2):
+        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+
+    # 1. works great (about 500 nodes expanded) but inadmissible and inconsistent
+    # dists = [mann_dist(c, state[0]) for (i, c) in enumerate(corners) if state[1][i] == 0]
+    # return sum(dists)
+
+    # 2. Heuristic resulted in expansion of 1289 nodes; not ideal. Score: 2/3
+    dists = [mann_dist(c, state[0]) for (i, c) in enumerate(corners) if state[1][i] == 0]
+    if dists == [] : return 0
+    return sum(dists) / len(dists)
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
