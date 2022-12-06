@@ -52,6 +52,11 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
+
+    def _manhattan_dist(self, xy1, xy2):
+        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+    
+
     def evaluationFunction(self, currentGameState: GameState, action):
         """
         Design a better evaluation function here.
@@ -69,13 +74,40 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
-        newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
+        newPos = successorGameState.getPacmanPosition() # (1, 2)
+        # Food: Boolean[][]; use function asList
+        newFood = successorGameState.getFood() 
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        
+        # distance to all foods
+        curPos = currentGameState.getPacmanPosition()
+        curFood = currentGameState.getFood()
+
+        df_c = [ self._manhattan_dist(curPos, f) for f in curFood.asList() ]
+        df_c_sum = sum(df_c) / len(df_c)
+        df = [ self._manhattan_dist(newPos, f) for f in newFood.asList() ]
+        df_sum = sum(df)/len(df)
+        # distance to all ghosts 
+        ghostPos = currentGameState.getGhostPositions()
+        dg_c = [ self._manhattan_dist(curPos, g) for g in ghostPos ]
+        dg_c_sum = sum(dg_c) / len(dg_c)
+        newGhostPos = successorGameState.getGhostPositions()
+        dg = [ self._manhattan_dist(newPos, g) for g in newGhostPos]
+        dg_sum = sum(dg) / len(dg)
+        # return successorGameState.getScore()
+
+        #if the new position has food or Ghost; if closer to food; if far from ghost
+        point =  (newPos in curFood.asList()) * 10 - (newPos in ghostPos) * 10000  \
+            + (df_c_sum - df_sum) * 2 \
+            - (dg_c_sum - dg_sum) * 1
+        #point = df_sum - 10 * sum(dg) #+ successorGameState.getScore() 
+
+        #Act based only on the close foods; the remote ghost has no threat
+        # print(point, df_c_sum - df_sum)
+        return point
+
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
