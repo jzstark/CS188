@@ -53,8 +53,9 @@ class ReflexAgent(Agent):
         return legalMoves[chosenIndex]
 
 
-    def _manhattan_dist(self, xy1, xy2):
-        return abs(xy1[0] - xy2[0]) + abs(xy1[1] - xy2[1])
+    def _avg_manhattan(self, xy, lst):
+        dist = [manhattanDistance(xy, xy2) for xy2 in lst]
+        return sum(dist) / len(dist) if len(dist) != 0 else 0
     
 
     def evaluationFunction(self, currentGameState: GameState, action):
@@ -79,33 +80,43 @@ class ReflexAgent(Agent):
         newFood = successorGameState.getFood() 
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        curGhostStates = currentGameState.getGhostStates()
+        curScaredTimes = [ghostState.scaredTimer for ghostState in curGhostStates]
         "*** YOUR CODE HERE ***"
-        
+
+        """ Achieve score: 3/4 """
         # distance to all foods
         curPos = currentGameState.getPacmanPosition()
         curFood = currentGameState.getFood()
-
-        df_c = [ self._manhattan_dist(curPos, f) for f in curFood.asList() ]
-        df_c_sum = sum(df_c) / len(df_c)
-        df = [ self._manhattan_dist(newPos, f) for f in newFood.asList() ]
-        df_sum = sum(df)/len(df)
+        df_c_sum = self._avg_manhattan(curPos, curFood.asList()) 
+        df_sum = self._avg_manhattan(newPos, newFood.asList())
         # distance to all ghosts 
         ghostPos = currentGameState.getGhostPositions()
-        dg_c = [ self._manhattan_dist(curPos, g) for g in ghostPos ]
-        dg_c_sum = sum(dg_c) / len(dg_c)
         newGhostPos = successorGameState.getGhostPositions()
-        dg = [ self._manhattan_dist(newPos, g) for g in newGhostPos]
-        dg_sum = sum(dg) / len(dg)
-        # return successorGameState.getScore()
+        dg_c_sum = self._avg_manhattan(curPos, ghostPos)
+        dg_sum = self._avg_manhattan(newPos, newGhostPos)
+        # distance to capsules 
+        curCapPos = currentGameState.getCapsules()
+        newCapPos = successorGameState.getCapsules()
+        dc_c = self._avg_manhattan(curPos, curCapPos)
+        dc = self._avg_manhattan(newPos, newCapPos)
 
-        #if the new position has food or Ghost; if closer to food; if far from ghost
-        point =  (newPos in curFood.asList()) * 10 - (newPos in ghostPos) * 10000  \
-            + (df_c_sum - df_sum) * 2 \
-            - (dg_c_sum - dg_sum) * 1
-        #point = df_sum - 10 * sum(dg) #+ successorGameState.getScore() 
+        # if the new position has food or Ghost; if closer to food/capsule; if far from ghost
+        # reduce point if repeat steps
+        point =  (newPos in curFood.asList()) * 10 - (newPos in newGhostPos) * 100000 \
+            + (newPos in curCapPos) * 30 \
+            + (df_c_sum - df_sum) * 1.5 \
+            - (dg_c_sum - dg_sum) * 1 \
+            + (dc_c - dc) * 2 \
+            + (successorGameState.getScore() - currentGameState.getScore())
+        
+        if min(curScaredTimes) > manhattanDistance(curPos, ghostPos[0]):
+            point += (dg_c_sum - dg_sum) * 5
+        # NOTE: changing the last parameter 8 something large would stop 
+        # the agent from eating the capsules somehow in the mediumClassic layout 
+        if len(newFood.asList()) <= 5:
+            point += (random.random() - 0.5) * 3
 
-        #Act based only on the close foods; the remote ghost has no threat
-        # print(point, df_c_sum - df_sum)
         return point
 
 
