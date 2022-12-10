@@ -245,18 +245,79 @@ class MinimaxAgent(MultiAgentSearchAgent):
         # the count of getScore function matters!
 
 
-
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
     """
+    def getMaxValue(self, state: GameState, alpha, beta):
+        self.current_layer += 1
+
+        v = -100000000
+        pacman_actions = state.getLegalActions(0)
+        for action in pacman_actions:
+            pacman_state = state.generateSuccessor(0, action)
+            # value from the first ghost
+            v = self.getValue(pacman_state, 1, alpha, beta)
+            if v > beta : 
+                self.current_layer -= 1
+                return v
+            alpha = max(alpha, v)
+        
+        self.current_layer -= 1
+        return v
+        
+
+    def getMinValue(self, state: GameState, gIndex, alpha, beta):
+        self.current_layer += 1
+
+        if gIndex + 1 < state.getNumAgents():
+            nextAgentIdx = gIndex + 1 
+        else:
+            nextAgentIdx = 0
+        
+        v = 100000000
+        ghost_actions = state.getLegalActions(gIndex)
+        for action in ghost_actions:
+            ghost_state = state.generateSuccessor(gIndex, action)
+            v = self.getValue(ghost_state, nextAgentIdx, alpha, beta)
+            if v < alpha :
+                self.current_layer -= 1
+                return v
+            beta = min(beta, v)
+        
+        self.current_layer -= 1
+        return v
+
+
+    def getValue(self, state: GameState, index, alpha, beta):
+        n = state.getNumAgents()
+        if self.current_layer >= self.depth * n or state.isWin() or state.isLose():
+            return self.evaluationFunction(state) 
+
+        if index == 0 : return self.getMaxValue(state, alpha, beta)
+        return self.getMinValue(state, index, alpha, beta)
 
     def getAction(self, gameState: GameState):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Initialise
+        self.current_layer = 1 
+        alpha = -100000000
+        beta = 100000000
+
+        legalMoves = gameState.getLegalActions(0)
+        pacStates = [gameState.generateSuccessor(0, action) for action in legalMoves]
+        # starting from the first ghost
+        scores = [self.getValue(s, 1, alpha, beta) for s in pacStates] 
+
+        bestScore = max(scores)
+        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        chosenIndex = random.choice(bestIndices)
+        return legalMoves[chosenIndex]
+
+
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
