@@ -149,7 +149,7 @@ class MultiAgentSearchAgent(Agent):
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
-        self.current_depth = 1
+        self.current_layer = 1
 
 # A big problem: "current_depth" needs to backtrack!
 
@@ -159,47 +159,51 @@ class MinimaxAgent(MultiAgentSearchAgent):
     """
 
     def getMaxValue(self, state: GameState):
-        
+        self.current_layer += 1
         v = -100000000
         pacman_actions = state.getLegalActions(0)
 
-        print("Max agent at depth: ", self.current_depth, " with %d children" % len(pacman_actions) )
+        #print("Max agent at layer: ", self.current_layer, " with %d children" % len(pacman_actions) )
         vs = [0] * len(pacman_actions)
         for i, action in enumerate(pacman_actions):
             pacman_state = state.generateSuccessor(0, action)
             vs[i] = self.getValue(pacman_state, 1) # value from the first ghost
-        print("Max@2 agent at depth:", self.current_depth, "; value:", vs)
+        #print("Max@2 agent at layer:", self.current_layer, "; value:", vs)
+        
+        self.current_layer -= 1
         return max(v, max(vs))
         
 
     def getMinValue(self, state: GameState, gIndex):
+        self.current_layer += 1
+
         if gIndex + 1 < state.getNumAgents():
             nextAgentIdx = gIndex + 1 
         else:
-            #NOTE: This is the source of bug!
-            self.current_depth += 1
             nextAgentIdx = 0
         
         v = 100000000
         ghost_actions = state.getLegalActions(gIndex)
 
-        print("MIN agent %d at depth: " % gIndex, self.current_depth, " with %d children" % len(ghost_actions) )
-        
+        #print("MIN agent %d at layer: " % gIndex, self.current_layer, " with %d children" % len(ghost_actions) )
         vs = [0] * len(ghost_actions)
         for i, action in enumerate(ghost_actions):
             ghost_state = state.generateSuccessor(gIndex, action)
             vs[i] = self.getValue(ghost_state, nextAgentIdx)
-        print("MIN@2 agent ", gIndex, " at depth:", self.current_depth, "; value:", vs)
+        #print("MIN@2 agent ", gIndex, " at layer:", self.current_layer, "; value:", vs)
         
-
+        self.current_layer -= 1
         return min(v, min(vs))
 
 
     def getValue(self, state: GameState, index):
-        isEnd = state.isWin() or state.isLose()
-        overDepth = self.current_depth > self.depth
-        print("FXXK: main func at index ", index, "isEnd =",isEnd, ";overdepth=", overDepth)
-        if self.current_depth > self.depth or state.isWin() or state.isLose():
+        n = state.getNumAgents()
+        
+        #isEnd = state.isWin() or state.isLose()
+        #overDepth = self.current_layer >= self.depth * n
+        #print("FXXK: main func at index ", index, "isEnd =",isEnd, ";overdepth=", overDepth)
+        
+        if self.current_layer >= self.depth * n - 1 or state.isWin() or state.isLose():
             return self.evaluationFunction(state) 
 
         if index == 0 : return self.getMaxValue(state)
@@ -230,13 +234,13 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        self.current_depth = 1
+        self.current_layer = 1
 
-        print("&&&&&=======================", gameState.getScore(), gameState.getNumAgents())
+        #print("&&&&&=======================", gameState.getScore(), gameState.getNumAgents())
         legalMoves = gameState.getLegalActions(0)
         pacStates = [gameState.generateSuccessor(0, action) for action in legalMoves]
         scores = [self.getValue(s, 1) for s in pacStates] # starting from the first ghost
-        scores2 = [s.getScore() for s in pacStates]
+        #scores2 = [s.getScore() for s in pacStates]
 
         #print(gameState.getPacmanPosition())
         #print(gameState.getFood())
@@ -246,7 +250,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices)
         
-        print(scores, legalMoves, legalMoves[chosenIndex], scores2)
+        #print(scores, legalMoves, legalMoves[chosenIndex], scores2)
         
         return legalMoves[chosenIndex]
 
