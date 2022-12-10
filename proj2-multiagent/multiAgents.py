@@ -149,6 +149,8 @@ class MultiAgentSearchAgent(Agent):
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
+
+        # layer counter in the tree 
         self.current_layer = 1
 
 # A big problem: "current_depth" needs to backtrack!
@@ -160,16 +162,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     def getMaxValue(self, state: GameState):
         self.current_layer += 1
+
         v = -100000000
         pacman_actions = state.getLegalActions(0)
-
-        #print("Max agent at layer: ", self.current_layer, " with %d children" % len(pacman_actions) )
         vs = [0] * len(pacman_actions)
         for i, action in enumerate(pacman_actions):
             pacman_state = state.generateSuccessor(0, action)
             vs[i] = self.getValue(pacman_state, 1) # value from the first ghost
-        #print("Max@2 agent at layer:", self.current_layer, "; value:", vs)
         
+        # Backtrack layer counter 
         self.current_layer -= 1
         return max(v, max(vs))
         
@@ -184,13 +185,10 @@ class MinimaxAgent(MultiAgentSearchAgent):
         
         v = 100000000
         ghost_actions = state.getLegalActions(gIndex)
-
-        #print("MIN agent %d at layer: " % gIndex, self.current_layer, " with %d children" % len(ghost_actions) )
         vs = [0] * len(ghost_actions)
         for i, action in enumerate(ghost_actions):
             ghost_state = state.generateSuccessor(gIndex, action)
             vs[i] = self.getValue(ghost_state, nextAgentIdx)
-        #print("MIN@2 agent ", gIndex, " at layer:", self.current_layer, "; value:", vs)
         
         self.current_layer -= 1
         return min(v, min(vs))
@@ -198,12 +196,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
     def getValue(self, state: GameState, index):
         n = state.getNumAgents()
-        
-        #isEnd = state.isWin() or state.isLose()
-        #overDepth = self.current_layer >= self.depth * n
-        #print("FXXK: main func at index ", index, "isEnd =",isEnd, ";overdepth=", overDepth)
-        
-        if self.current_layer >= self.depth * n - 1 or state.isWin() or state.isLose():
+        if self.current_layer >= self.depth * n or state.isWin() or state.isLose():
             return self.evaluationFunction(state) 
 
         if index == 0 : return self.getMaxValue(state)
@@ -234,25 +227,23 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        self.current_layer = 1
 
-        #print("&&&&&=======================", gameState.getScore(), gameState.getNumAgents())
+        # Reset layer counter for each move 
+        self.current_layer = 1 
+
         legalMoves = gameState.getLegalActions(0)
         pacStates = [gameState.generateSuccessor(0, action) for action in legalMoves]
         scores = [self.getValue(s, 1) for s in pacStates] # starting from the first ghost
-        #scores2 = [s.getScore() for s in pacStates]
-
-        #print(gameState.getPacmanPosition())
-        #print(gameState.getFood())
-        #print(gameState.getGhostPositions())
 
         bestScore = max(scores)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices)
         
-        #print(scores, legalMoves, legalMoves[chosenIndex], scores2)
-        
         return legalMoves[chosenIndex]
+
+        # NOTE: do NOT use 'getScore' in print when evaluating; 
+        # the count of getScore function matters!
+
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
