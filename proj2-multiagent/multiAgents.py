@@ -248,23 +248,34 @@ class MinimaxAgent(MultiAgentSearchAgent):
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
     Your minimax agent with alpha-beta pruning (question 3)
+    alpha: MAX's best option on a path to root
+    beta : MIN's best option on a path to root
+
+    NOTE: how alpha-beta works in multiple MINs could be a big problem
     """
+
     def getMaxValue(self, state: GameState, alpha, beta):
         self.current_layer += 1
 
         v = -100000000
+        vAction = Directions.STOP
+
         pacman_actions = state.getLegalActions(0)
         for action in pacman_actions:
             pacman_state = state.generateSuccessor(0, action)
-            # value from the first ghost
-            v = self.getValue(pacman_state, 1, alpha, beta)
-            if v > beta : 
+            
+            u, _uAction = self.getValue(pacman_state, 1, alpha, beta)
+            if v < u: v = u ; vAction = action
+
+            if v > beta :
                 self.current_layer -= 1
-                return v
+                return v, action
             alpha = max(alpha, v)
         
         self.current_layer -= 1
-        return v
+
+        # No early exit; return the action of the largest value
+        return v, vAction
         
 
     def getMinValue(self, state: GameState, gIndex, alpha, beta):
@@ -276,26 +287,36 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             nextAgentIdx = 0
         
         v = 100000000
+        vAction = Directions.STOP
+        
         ghost_actions = state.getLegalActions(gIndex)
         for action in ghost_actions:
             ghost_state = state.generateSuccessor(gIndex, action)
-            v = self.getValue(ghost_state, nextAgentIdx, alpha, beta)
-            if v < alpha :
+            #v = min(v, self.getValue(ghost_state, nextAgentIdx, alpha, beta))
+            u, _uAction = self.getValue(ghost_state, nextAgentIdx, alpha, beta)
+            if v > u:
+                # "I don't care about the direction my child choose, i.e. uAction; 
+                # only its value, so that I can choose my own direction"
+                v = u; vAction = action
+
+            if v < alpha:
                 self.current_layer -= 1
-                return v
+                return v, action
             beta = min(beta, v)
         
         self.current_layer -= 1
-        return v
+        return v, vAction
 
 
+    # RETURN: (1) the best value of my children; (2) the direction of that child
     def getValue(self, state: GameState, index, alpha, beta):
         n = state.getNumAgents()
         if self.current_layer >= self.depth * n or state.isWin() or state.isLose():
-            return self.evaluationFunction(state) 
+            return self.evaluationFunction(state), Directions.STOP
 
         if index == 0 : return self.getMaxValue(state, alpha, beta)
         return self.getMinValue(state, index, alpha, beta)
+
 
     def getAction(self, gameState: GameState):
         """
@@ -307,15 +328,11 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         alpha = -100000000
         beta = 100000000
 
-        legalMoves = gameState.getLegalActions(0)
-        pacStates = [gameState.generateSuccessor(0, action) for action in legalMoves]
-        # starting from the first ghost
-        scores = [self.getValue(s, 1, alpha, beta) for s in pacStates] 
+        # NOTE: do NOT copy the previous minmax agent code -- 
+        # the other layers should be aware of the top MAX node!
 
-        bestScore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
-        chosenIndex = random.choice(bestIndices)
-        return legalMoves[chosenIndex]
+        _bestScore, bestAction = self.getValue(gameState, 0, alpha, beta)
+        return bestAction
 
 
 
