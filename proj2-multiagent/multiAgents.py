@@ -251,7 +251,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     alpha: MAX's best option on a path to root
     beta : MIN's best option on a path to root
 
-    NOTE: how alpha-beta works in multiple MINs could be a big problem
+    NOTE: how alpha-beta works in multiple MINs could be a big problem...?
+    However, the MINs turn out to follow the same early-return logic, including the MIN that follows another MIN.
+    The alpha-beta pruning is indeed very tricky. 
     """
 
     def getMaxValue(self, state: GameState, alpha, beta):
@@ -292,16 +294,18 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         ghost_actions = state.getLegalActions(gIndex)
         for action in ghost_actions:
             ghost_state = state.generateSuccessor(gIndex, action)
-            #v = min(v, self.getValue(ghost_state, nextAgentIdx, alpha, beta))
+            # "I don't care about the direction my child choose, i.e. uAction; 
+            # only its value, so that I can choose my own direction, vAction"
             u, _uAction = self.getValue(ghost_state, nextAgentIdx, alpha, beta)
-            if v > u:
-                # "I don't care about the direction my child choose, i.e. uAction; 
-                # only its value, so that I can choose my own direction"
-                v = u; vAction = action
+            if v > u: v = u; vAction = action
 
+            # NOTE: I thought I should only early return for the first layer minValue agent (first ghost):
+            # if gIndex == 1 and v < alpha:
+            # But it turns out that the second min-agent can still return early.
             if v < alpha:
                 self.current_layer -= 1
                 return v, action
+            
             beta = min(beta, v)
         
         self.current_layer -= 1
@@ -323,13 +327,12 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        # Initialise
-        self.current_layer = 1 
         alpha = -100000000
         beta = 100000000
 
         # NOTE: do NOT copy the previous minmax agent code -- 
         # the other layers should be aware of the top MAX node!
+        self.current_layer = 0 # not 1
 
         _bestScore, bestAction = self.getValue(gameState, 0, alpha, beta)
         return bestAction
