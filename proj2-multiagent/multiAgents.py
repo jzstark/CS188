@@ -316,7 +316,8 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
     def getValue(self, state: GameState, index, alpha, beta):
         n = state.getNumAgents()
         if self.current_layer >= self.depth * n or state.isWin() or state.isLose():
-            return self.evaluationFunction(state), Directions.STOP
+            #return self.evaluationFunction(state), Directions.STOP
+            return betterEvaluationFunction(state), Directions.STOP
 
         if index == 0 : return self.getMaxValue(state, alpha, beta)
         return self.getMinValue(state, index, alpha, beta)
@@ -406,15 +407,63 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         return bestAction
 
 
+def _avg_manhattan(xy, lst):
+        dist = [manhattanDistance(xy, xy2) for xy2 in lst]
+        return sum(dist) / len(dist) if len(dist) != 0 else 0
+
+
 def betterEvaluationFunction(currentGameState: GameState):
     """
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
-    evaluation function (question 5).
+    evaluation function (question 5). -- 4/6 (baseline: 3/6)
 
     DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
 
+    curPos = currentGameState.getPacmanPosition()
+    # distance to foods
+    curFood = currentGameState.getFood()
+    dist_foods = [manhattanDistance(curPos, p) for p in curFood.asList()]
+    df = sum(dist_foods) / len(dist_foods) if len(dist_foods) != 0 else 0
+    # distance to all ghosts 
+    ghostPos = currentGameState.getGhostPositions()
+    dist_ghost = [manhattanDistance(curPos, p) for p in ghostPos]
+    dg = sum(dist_ghost) / len(dist_ghost) if len(dist_ghost) != 0 else 0
+    # distance to capsules 
+    capPos = currentGameState.getCapsules()
+    dist_cap = [manhattanDistance(curPos, p) for p in capPos]
+    dc = sum(dist_cap) / len(dist_cap) if len(dist_cap) != 0 else 0
+
+    """
+    # distance to closest foods 
+    if len(dist_foods) == 0:
+        pf = 0
+    else:
+        dfmin = min(dist_foods)
+        df_mins = [x for x in dist_foods if x == dfmin]
+        pf = dfmin * len(df_mins) if dfmin <= 3 else 0
+    
+    # distance to closest ghost
+    if len(dist_foods) == 0:
+        pg = 0
+    else:
+        dgmin = min(dist_ghost)
+        dg_mins = [x for x in dist_ghost if x == dgmin]
+        pg = dgmin * len(dg_mins) * 10 if dgmin <= 4 else 0
+    
+    # distance to closest capsule
+    if len(dist_cap) == 0:
+        pc = 0 
+    else: 
+        dcmin = min(dist_cap)
+        dc_mins = [x for x in dist_cap if x == dcmin]
+        pc = dcmin * len(dc_mins) * 5 if dcmin <= 3 else 0
+   """
+
+    return currentGameState.getScore() + \
+        df - 6 * dg + 3 * dc
+        # pf - pg + pc
+    
 # Abbreviation
 better = betterEvaluationFunction
