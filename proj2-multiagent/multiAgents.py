@@ -247,7 +247,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
-    Your minimax agent with alpha-beta pruning (question 3)
+    Your minimax agent with alpha-beta pruning (question 3) -- 5/5
     alpha: MAX's best option on a path to root
     beta : MIN's best option on a path to root
 
@@ -341,8 +341,56 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
-      Your expectimax agent (question 4)
+      Your expectimax agent (question 4) -- 5/5
     """
+
+    def getMaxValue(self, state: GameState):
+        self.current_layer += 1
+        v = -100000000
+        vAction = Directions.STOP
+
+        pacman_actions = state.getLegalActions(0)
+        for action in pacman_actions:
+            pacman_state = state.generateSuccessor(0, action)
+            u, _uAction = self.getValue(pacman_state, 1)
+            if v < u: v = u ; vAction = action
+        
+        self.current_layer -= 1
+        return v, vAction
+        
+
+    def getExpValue(self, state: GameState, gIndex):
+        self.current_layer += 1
+
+        if gIndex + 1 < state.getNumAgents():
+            nextAgentIdx = gIndex + 1 
+        else:
+            nextAgentIdx = 0
+                
+        ghost_actions = state.getLegalActions(gIndex)
+        n = len(ghost_actions)
+        assert(n > 0)
+
+        v = 0
+        for action in ghost_actions:
+            ghost_state = state.generateSuccessor(gIndex, action)
+            u, _uAction = self.getValue(ghost_state, nextAgentIdx)
+            v += u / n 
+
+        self.current_layer -= 1
+        # The Expect agent chooses no specific action
+        return v, Directions.STOP 
+
+
+    # RETURN: (1) the best value of my children; (2) the direction of that child
+    def getValue(self, state: GameState, index):
+        n = state.getNumAgents()
+        if self.current_layer >= self.depth * n or state.isWin() or state.isLose():
+            return self.evaluationFunction(state), Directions.STOP
+
+        if index == 0 : return self.getMaxValue(state)
+        return self.getExpValue(state, index)
+    
 
     def getAction(self, gameState: GameState):
         """
@@ -352,7 +400,11 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        self.current_layer = 0 
+
+        _bestScore, bestAction = self.getValue(gameState, 0)
+        return bestAction
+
 
 def betterEvaluationFunction(currentGameState: GameState):
     """
