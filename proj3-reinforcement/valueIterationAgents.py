@@ -57,7 +57,9 @@ class ValueIterationAgent(ValueEstimationAgent):
         self.discount = discount
         self.iterations = iterations
         self.values = util.Counter() # A Counter is a dict with default 0
+        self.values_old = util.Counter() # Important: values of the k - 1 layer.
         self.runValueIteration()
+
 
     def runValueIteration(self):
         """
@@ -66,11 +68,28 @@ class ValueIterationAgent(ValueEstimationAgent):
         """
         "*** YOUR CODE HERE ***"
 
+        for _ in range(self.iterations):
+            states = self.mdp.getStates()
+            for state in states:
+                actions = self.mdp.getPossibleActions(state)
+                qs = [self.computeQValueFromValues(state, action) for action in actions]
+                self.values[state] = max(qs) if len(qs) > 0 else 0
+            
+            self.values_old = self.values.copy()
+
+        return
+
+
     def getValue(self, state):
         """
           Return the value of the state (computed in __init__).
         """
         return self.values[state]
+
+
+    def _getValueOld(self, state):
+        return self.values_old[state]
+
 
     def computeQValueFromValues(self, state, action):
         """
@@ -78,7 +97,16 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        nextStatesProb = self.mdp.getTransitionStatesAndProbs(state, action)
+        q = 0
+        for (nextState, prob) in nextStatesProb:
+            r = self.mdp.getReward(state, action, nextState)
+            # Compute q-value based on the values of previous iteration
+            vk = self._getValueOld(nextState) 
+            q += prob * (r + self.discount * vk)
+        
+        return q
+            
 
     def computeActionFromValues(self, state):
         """
@@ -90,7 +118,15 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        actions = self.mdp.getPossibleActions(state)
+        if len(actions) == 0 : return None
+        qs = [self.computeQValueFromValues(state, action) for action in actions]
+        mq = max(qs)
+        bestIndices = [index for index in range(len(qs)) if qs[index] == mq]
+        # return the first best action
+        idx = bestIndices[0]
+        return actions[idx]
+
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
