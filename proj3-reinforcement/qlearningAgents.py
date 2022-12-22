@@ -174,15 +174,18 @@ class ApproximateQAgent(PacmanQAgent):
        ApproximateQLearningAgent
        You should only have to overwrite getQValue
        and update.  All other QLearningAgent functions
-       should work as is.
+       should work as is. -- 4/4
     """
     def __init__(self, extractor='IdentityExtractor', **args):
         self.featExtractor = util.lookup(extractor, globals())()
         PacmanQAgent.__init__(self, **args)
-        self.weights = util.Counter()
+        self.weights = util.Counter() 
 
     def getWeights(self):
         return self.weights
+
+    def setWeights(self, k, v):
+        self.weights[k] = v
 
     def getQValue(self, state, action):
         """
@@ -190,14 +193,35 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        s = 0 
+        w = self.getWeights()
+        # dict; key -> v; key can be string or (state, action) etc.
+        features = self.featExtractor.getFeatures(state, action)
+        for k, v in features.items():
+            s += w[k] * v
+        return s
+
 
     def update(self, state, action, nextState, reward: float):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        nextNextActions = self.getLegalActions(nextState)
+        qs = [self.getQValue(nextState, a) for a in nextNextActions]
+        v = self.discount * max(qs) if len(qs) > 0 else 0 
+        q = self.getQValue(state, action)
+        diff = reward + v - q
+
+        weights = self.getWeights()
+        features = self.featExtractor.getFeatures(state, action)
+        for k, v in weights.items():
+          u = self.alpha * diff * features[k]
+          self.setWeights(k, v + u)
+        
+        return
+
 
     def final(self, state):
         """Called at the end of each game."""
@@ -208,4 +232,4 @@ class ApproximateQAgent(PacmanQAgent):
         if self.episodesSoFar == self.numTraining:
             # you might want to print your weights here for debugging
             "*** YOUR CODE HERE ***"
-            pass
+            print(self.getWeights())
