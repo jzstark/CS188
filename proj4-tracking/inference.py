@@ -56,12 +56,21 @@ def constructBayesNet(gameState: hunters.GameState):
     Y_RANGE = gameState.getWalls().height
     MAX_NOISE = 7
 
-    variables = []
-    edges = []
-    variableDomainsDict = {}
-
     "*** YOUR CODE HERE ***"
-    raiseNotDefined()
+    variables = [PAC, GHOST0, GHOST1, OBS0, OBS1]
+    edges = [(GHOST0, OBS0), (PAC, OBS0), (GHOST1, OBS1), (PAC, OBS1)]
+    
+    positions = []
+    for i in range(X_RANGE):
+        for j in range(Y_RANGE):
+            positions.append((i,j))
+
+    variableDomainsDict = {}
+    variableDomainsDict[PAC] = positions
+    variableDomainsDict[GHOST0] = positions
+    variableDomainsDict[GHOST1] = positions
+    variableDomainsDict[OBS0] = list(range(X_RANGE + Y_RANGE - 1 + MAX_NOISE))
+    variableDomainsDict[OBS1] = list(range(X_RANGE + Y_RANGE - 1 + MAX_NOISE))
     "*** END YOUR CODE HERE ***"
 
     net = bn.constructEmptyBayesNet(variables, edges, variableDomainsDict)
