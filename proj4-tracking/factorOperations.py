@@ -190,7 +190,25 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        print(factor)
+        conditionVar = list(factor.conditionedVariables())
+        unconditionVar = list(factor.unconditionedVariables() - set((eliminationVariable, )))
+        variableDomainsDict = factor.variableDomainsDict()
+
+        reducedFactor = Factor(unconditionVar, conditionVar, variableDomainsDict)
+
+        # Just difficult to imagine this solution
+        # Ref: https://github.com/yttfwang/cs188-proj4/blob/master/factorOperations.py
+        for reducedAssignment in reducedFactor.getAllPossibleAssignmentDicts():
+            prob = 0
+            for elimVarVal in factor.variableDomainsDict()[eliminationVariable]:
+                fullAssignment = reducedAssignment
+                fullAssignment[eliminationVariable] = elimVarVal
+
+                prob = prob + factor.getProbability(fullAssignment)
+            reducedFactor.setProbability(reducedAssignment, prob)
+
+        return reducedFactor
         "*** END YOUR CODE HERE ***"
 
     return eliminate
