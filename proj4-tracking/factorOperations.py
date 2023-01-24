@@ -102,7 +102,44 @@ def joinFactors(factors: List[Factor]):
 
 
     "*** YOUR CODE HERE ***"
-    raiseNotDefined()
+    setsOfConditioned = [set(factor.conditionedVariables()) for factor in factors]
+    if len(factors) > 1:
+        unconditioned = functools.reduce(lambda x, y: x | y, setsOfUnconditioned)
+        conditioned = functools.reduce(lambda x, y: x | y, setsOfConditioned)
+        intersect = unconditioned & conditioned
+        conditioned = conditioned - intersect
+        unconditioned = list(unconditioned)
+        conditioned = list(conditioned)
+    else:
+        unconditioned = list(setsOfConditioned[0])
+        conditioned = list(setsOfConditioned[0])
+
+    # For this problem, you may assume that all the input Factors have come from the same BayesNet, 
+    # and so their variableDomainsDicts are all the same.
+    variableDomainsDict = list(factors)[0].variableDomainsDict()
+
+    joinedFactor = Factor(unconditioned, conditioned, variableDomainsDict)
+
+    # Compute joint probability
+    # for f in factors: 
+    #    print(f.unconditionedVariables(), f.conditionedVariables())
+    #    print(f.getAllPossibleAssignmentDicts())
+    #    print(f)
+
+    for joinedAssignment in joinedFactor.getAllPossibleAssignmentDicts():
+        factorAssignmentProduct = 1
+        # print("fuck", joinedAssignment)
+        for f in factors:
+            # This is mechanism to acquire probability is just amazing :
+            # Factor methods that take an assignmentDict as input 
+            # (such as getProbability and setProbability) can handle 
+            # assignmentDicts that assign more variables than are in that factor.
+            
+            # print("shit", f.getProbability(joinedAssignment))
+            factorAssignmentProduct = factorAssignmentProduct * f.getProbability(joinedAssignment)
+        joinedFactor.setProbability(joinedAssignment, factorAssignmentProduct)
+
+    return joinedFactor
     "*** END YOUR CODE HERE ***"
 
 ########### ########### ###########
