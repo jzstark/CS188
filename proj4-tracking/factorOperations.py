@@ -111,7 +111,7 @@ def joinFactors(factors: List[Factor]):
         unconditioned = list(unconditioned)
         conditioned = list(conditioned)
     else:
-        unconditioned = list(setsOfConditioned[0])
+        unconditioned = list(setsOfUnconditioned[0])
         conditioned = list(setsOfConditioned[0])
 
     # For this problem, you may assume that all the input Factors have come from the same BayesNet, 
