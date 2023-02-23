@@ -356,6 +356,7 @@ class DiscreteDistribution(dict):
         "*** YOUR CODE HERE ***"
         if len(self) == 0: return
         s = self.total()
+        if s == 0 : return
         for k, v in self.items():
             self[k] = v / s
         return
@@ -581,7 +582,13 @@ class ExactInference(InferenceModule):
         position is known.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        #print(self.beliefs)
+        pacmanPos = gameState.getPacmanPosition()
+        jailPos = self.getJailPosition()
+        for ghostPos in self.allPositions:
+            p = self.getObservationProb(observation, pacmanPos, ghostPos, jailPos)
+            self.beliefs[ghostPos] = p * self.beliefs[ghostPos]
+        
         "*** END YOUR CODE HERE ***"
         self.beliefs.normalize()
     
