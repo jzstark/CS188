@@ -127,6 +127,8 @@ from game import Directions
 class GreedyBustersAgent(BustersAgent):
     "An agent that charges the closest ghost."
 
+
+
     def registerInitialState(self, gameState: busters.GameState):
         "Pre-computes the distance between every two points."
         BustersAgent.registerInitialState(self, gameState)
@@ -149,5 +151,23 @@ class GreedyBustersAgent(BustersAgent):
             [beliefs for i, beliefs in enumerate(self.ghostBeliefs)
              if livingGhosts[i+1]]
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        def findMaxInDict(d):
+            max_val = 0; max_key = None
+            for k, v in d.items():
+                if v > max_val: 
+                    max_val = v; max_key = k
+            return max_key
+        
+        def dist(p):
+            return self.distancer.getDistance(p, pacmanPosition)
+
+        def chooseAction(action):
+            pos = Actions.getSuccessor(pacmanPosition, action)
+            return self.distancer.getDistance(closestGhost, pos)
+        
+        mostLikelyGPos = [findMaxInDict(d) for d in livingGhostPositionDistributions]
+        closestGhost  = min(mostLikelyGPos, key=dist)
+        closestAction = min(legal, key=chooseAction)
+        return closestAction
+        
         "*** END YOUR CODE HERE ***"
