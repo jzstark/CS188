@@ -651,11 +651,18 @@ class ParticleFilter(InferenceModule):
         self.particles = []
         "*** YOUR CODE HERE ***"
         while True:
-        #for _ in (self.numParticles % len(self.legalPositions)):
+        ##for _ in (self.numParticles % len(self.legalPositions)):
             for p in self.legalPositions:
                 if len(self.particles) >= self.numParticles: return
                 self.particles.append(p)
+        
+        ## Another solution:
+        #spacing = float(len(self.legalPositions))/float(self.numParticles)
+        #
+        #for x in range(self.numParticles):
+        #    self.particles.append(self.legalPositions[int(x*spacing)])
         "*** END YOUR CODE HERE ***"
+
 
     def getBeliefDistribution(self):
         """
@@ -690,7 +697,22 @@ class ParticleFilter(InferenceModule):
         the DiscreteDistribution may be useful.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        weights = [0] * self.numParticles
+
+        pacmanPos = gameState.getPacmanPosition()
+        jailPos = self.getJailPosition()
+        for i, ghostPos in enumerate(self.particles):
+            w = self.getObservationProb(observation, pacmanPos, ghostPos, jailPos)
+            weights[i] = w #* self.beliefs[ghostPos]
+        
+        if sum(weights) == 0: 
+            # if weights all zero, re-initialize, and then just start another round. 
+            self.initializeUniformly(gameState)
+        else:
+            self.particles  = random.choices(self.particles, weights=weights, k=self.numParticles)
+            self.belief = self.getBeliefDistribution()
+        return
+
         "*** END YOUR CODE HERE ***"
     
     ########### ########### ###########
