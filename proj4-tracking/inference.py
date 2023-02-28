@@ -819,7 +819,6 @@ class JointParticleFilter(ParticleFilter):
                 weights[i] *= w
         
         if sum(weights) == 0: 
-            # if weights all zero, re-initialize, and then just start another round. 
             self.initializeUniformly(gameState)
         else:
             self.particles  = random.choices(self.particles, weights=weights, k=self.numParticles)
@@ -842,7 +841,10 @@ class JointParticleFilter(ParticleFilter):
 
             # now loop through and update each entry in newParticle...
             "*** YOUR CODE HERE ***"
-            raiseNotDefined()
+            for i in range(self.numGhosts):
+                newPosDist = self.getPositionDistribution(gameState, list(oldParticle), i, self.ghostAgents[i])
+                newPos = random.choices(list(newPosDist.keys()), weights=list(newPosDist.values()), k=1)
+                newParticle[i] = newPos[0]
             """*** END YOUR CODE HERE ***"""
             newParticles.append(tuple(newParticle))
         self.particles = newParticles
