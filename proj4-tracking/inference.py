@@ -766,7 +766,15 @@ class JointParticleFilter(ParticleFilter):
         """
         self.particles = []
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        posComb = list(itertools.product(self.legalPositions, self.legalPositions))
+        random.shuffle(posComb)
+
+        for p in itertools.cycle(posComb):
+            self.particles.append(p)
+            if len(self.particles) >= self.numParticles: 
+                break
+        
+        return
         "*** END YOUR CODE HERE ***"
 
     def addGhostAgent(self, agent):
