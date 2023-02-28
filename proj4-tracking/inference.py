@@ -461,8 +461,7 @@ class InferenceModule:
         True positions, observed noisy distance
         """
         "*** YOUR CODE HERE ***"
-        jail = self.getJailPosition()
-        if ghostPosition == jail: 
+        if ghostPosition == jailPosition: 
             if noisyDistance == None: return 1.
             return 0.
         # ghost not in jail but distance is None : just not possible
@@ -810,7 +809,22 @@ class JointParticleFilter(ParticleFilter):
         the DiscreteDistribution may be useful.
         """
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        weights = [1] * self.numParticles
+
+        pacmanPos = gameState.getPacmanPosition()
+        for i, ghostPositions in enumerate(self.particles):
+            for j in range(self.numGhosts):
+                jailPos = self.getJailPosition(j)
+                w = self.getObservationProb(observation[j], pacmanPos, ghostPositions[j], jailPos)
+                weights[i] *= w
+        
+        if sum(weights) == 0: 
+            # if weights all zero, re-initialize, and then just start another round. 
+            self.initializeUniformly(gameState)
+        else:
+            self.particles  = random.choices(self.particles, weights=weights, k=self.numParticles)
+            self.belief = self.getBeliefDistribution()
+        return
         "*** END YOUR CODE HERE ***"
 
     ########### ########### ###########
